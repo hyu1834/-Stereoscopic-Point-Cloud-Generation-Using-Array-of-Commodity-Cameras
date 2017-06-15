@@ -29,3 +29,5 @@
 *.app
 
 MPCGUACC-0.0.2/*/build/
+MPCGUACC-0.0.2/*/*/build/
+MPCGUACC-0.0.2/Point\ Cloud\ Registration\ Using\ Distance\ Geometry/PCRUDG-0.0.2/build/
