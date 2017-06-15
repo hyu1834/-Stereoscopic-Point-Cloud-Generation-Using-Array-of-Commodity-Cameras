@@ -1,0 +1,37 @@
+{
+	"480":	{
+		
+	},
+	"720": {
+		"SGBM":	{
+			"preFilterCap": 63,
+			"SADWindowSize": 3,
+			"minDisparity": 4,
+			"numberOfDisparities": 256,
+			"uniquenessRatio": 10,
+			"speckleWindowSize": 100,
+			"speckleRange": 32,
+			"disp12MaxDiff": 1,
+			"fullDP": 1
+		}
+	},
+	"1080": {
+		"SGBM":	{
+			"preFilterCap": 63,
+			"SADWindowSize": 3,
+			"minDisparity": 5,
+			"numberOfDisparities": 240,
+			"uniquenessRatio": 10,
+			"speckleWindowSize": 100,
+			"speckleRange": 32,
+			"disp12MaxDiff": 1,
+			"fullDP": 1
+		}
+	},
+	"5MP": {
+		
+	},
+	"8MP": {
+
+	}
+}
