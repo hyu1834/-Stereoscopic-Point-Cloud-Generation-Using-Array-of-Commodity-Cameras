@@ -42,7 +42,7 @@
 class StereoCameraDisparity	{
 	private:
 		const bool calibratedCameras;
-		StereoCameraCalibrationParameters* scCP;
+		// StereoCameraCalibrationParameters* scCP;
 		STEREO_BM_ALG blockMatchAlg;
 
 		// Recitify Variables
@@ -60,12 +60,18 @@ class StereoCameraDisparity	{
 		cv::StereoBM sbm;
 		cv::StereoSGBM ssgbm;
 
+		// Unrectified Camera Parameters
+		StereoCameraCalibrationParameters* cameraCalibrationUnrectified;
+		// Rectified Camera Parameters
+		StereoCameraCalibrationParameters* cameraCalibrationRectified;
+
 	protected:
 	public:
 		/*
 			Constructor/Destructor
 		*/
-		StereoCameraDisparity(StereoCameraCalibrationParameters* scp, const bool calibrated = true);
+		StereoCameraDisparity(StereoCameraCalibrationParameters* cameraCalibrationUnrectified, 
+							  StereoCameraCalibrationParameters* cameraCalibrationRectified, const bool calibrated = true);
 		~StereoCameraDisparity();
 
 		/*

@@ -70,11 +70,37 @@ class StereoCameraCalibrationParameters: public StereoCameraParameters	{
 		int getClassType();
 		void setCalibrationFP(std::string cpfp);
 
+		inline double getCameraCxL()	{
+			return cameraMatrix1.at<double>(0, 2);
+		}
+
+		inline double getCameraCyL()	{
+			return cameraMatrix1.at<double>(1, 2);
+		}
+
+		inline double getCameraFxL()	{
+			return cameraMatrix1.at<double>(0, 0);
+		}
+
+		inline double getCameraFyL()	{
+			return cameraMatrix1.at<double>(1, 1);
+		}
+
+		inline double getBaseline()	{
+			return translationVector.at<double>(0, 0);
+		}
+
+		inline double getDeltaCx()	{
+			return qMatrix.at<double>(3, 3) * translationVector.at<double>(0, 0);
+		}
+
 		/*
 			Non-Template Class Methods
 		*/
 		bool readParams();
 		void printParams(std::ostream& out);
+		void updatePerspectiveMatrixWithCameraMatrix();
+		void updateCameraMatrixWithPerspectiveMatrix();
 
 		/*
 			Template Class Mathods

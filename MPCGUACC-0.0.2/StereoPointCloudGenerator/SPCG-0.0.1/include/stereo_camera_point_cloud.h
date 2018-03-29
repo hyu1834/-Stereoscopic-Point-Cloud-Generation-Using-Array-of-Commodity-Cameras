@@ -64,11 +64,15 @@ class StereoCameraPointCloud	{
 		// double FOV;
 		// double cameraDistance;
 
-		// Stereo Calibration Parameters
-		StereoCameraCalibrationParameters* sccp;
+		
 
 		// Disparity Map
 		StereoCameraDisparity* scd;
+
+		// Unrectified Camera Parameters
+		StereoCameraCalibrationParameters* cameraCalibrationUnrectified;
+		// Rectified Camera Parameters
+		StereoCameraCalibrationParameters* cameraCalibrationRectified;
 
 	protected:
 	public:
@@ -144,17 +148,24 @@ class StereoCameraPointCloud	{
 			filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 			// Solve the 3D Reproject according to the Methods
 			if(method == OPENCV)	{
@@ -183,7 +194,7 @@ class StereoCameraPointCloud	{
 						pointVec(2) = disparity;
 						pointVec(3) = 1;
 						// 3D Projection
-						pointVec = sccp->qMatrix * pointVec;
+						pointVec = cameraCalibrationRectified->qMatrix * pointVec;
 						pointVec /= pointVec(3);
 						// if the Z is > than max Z, we will ignore it
 						if(abs(pointVec(2)) < minZ || abs(pointVec(2)) > maxZ)	{
@@ -235,7 +246,7 @@ class StereoCameraPointCloud	{
 							Z = f * baseline / disparity
 						*/
 
-						pointZ = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+						pointZ = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 						// if the Z is > than max Z, we will ignore it
 						if(abs(pointZ) < minZ || abs(pointZ) > maxZ)	{
 						// if(abs(pointZ) > maxZ)	{
@@ -250,8 +261,8 @@ class StereoCameraPointCloud	{
 						point.g = bgrImage.at<uint8_t>(y, 3 * x + 1);
 						point.b = bgrImage.at<uint8_t>(y, 3 * x);
 						// Get XY coordinate
-						point.x = pointZ * (x - cx) / focal_length;
-						point.y = pointZ * (y - cy) / focal_length;
+						point.x = pointZ * (x - cx) / fx;
+						point.y = pointZ * (y - cy) / fx;
 						if(rMode == RMODE_2D)	{
 							point.z = 0.0;
 						}
@@ -286,17 +297,23 @@ class StereoCameraPointCloud	{
 			cv::Mat filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 			// Solve the 3D Reproject according to the Methods
 			if(method == OPENCV)	{
@@ -325,7 +342,7 @@ class StereoCameraPointCloud	{
 						pointVec(2) = disparity;
 						pointVec(3) = 1;
 						// 3D Projection
-						pointVec = sccp->qMatrix * pointVec;
+						pointVec = cameraCalibrationRectified->qMatrix * pointVec;
 						pointVec /= pointVec(3);
 						// if the Z is > than max Z, we will ignore it
 						if(abs(pointVec(2)) < minZ || abs(pointVec(2)) > maxZ)	{
@@ -377,7 +394,7 @@ class StereoCameraPointCloud	{
 							Z = f * baseline / disparity
 						*/
 
-						pointZ = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+						pointZ = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 						// if the Z is > than max Z, we will ignore it
 						if(abs(pointZ) < minZ || abs(pointZ) > maxZ)	{
 						// if(abs(pointZ) > maxZ)	{
@@ -392,8 +409,8 @@ class StereoCameraPointCloud	{
 						point.g = bgrImage.at<uint8_t>(y, 3 * x + 1);
 						point.b = bgrImage.at<uint8_t>(y, 3 * x);
 						// Get XY coordinate
-						point.x = pointZ * (x - cx) / focal_length;
-						point.y = pointZ * (y - cy) / focal_length;
+						point.x = pointZ * (x - cx) / fx;
+						point.y = pointZ * (y - cy) / fx;
 						if(rMode == RMODE_2D)	{
 							point.z = 0.0;
 						}
@@ -429,17 +446,23 @@ class StereoCameraPointCloud	{
 			filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 			
 			double z;
@@ -460,7 +483,7 @@ class StereoCameraPointCloud	{
 						Z = f * baseline / disparity
 					*/
 
-					z = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+					z = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 					// if the Z is > than max Z, we will ignore it
 					if(abs(z) < minZ || abs(z) > maxZ)	{
 					// if(abs(z) > maxZ)	{
@@ -507,17 +530,24 @@ class StereoCameraPointCloud	{
 			cv::Mat filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 			
 			double z;
@@ -538,7 +568,7 @@ class StereoCameraPointCloud	{
 						Z = f * baseline / disparity
 					*/
 
-					z = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+					z = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 					// if the Z is > than max Z, we will ignore it
 					if(abs(z) < minZ || abs(z) > maxZ)	{
 					// if(abs(z) > maxZ)	{
@@ -590,17 +620,23 @@ class StereoCameraPointCloud	{
 			filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 
 			double pointZ;
@@ -622,7 +658,7 @@ class StereoCameraPointCloud	{
 						Z = f * baseline / disparity
 					*/
 
-					pointZ = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+					pointZ = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 					// if the Z is > than max Z, we will ignore it
 					if(abs(pointZ) < minZ || abs(pointZ) > maxZ)	{
 					// if(abs(pointZ) > maxZ)	{
@@ -642,8 +678,8 @@ class StereoCameraPointCloud	{
 					depthPoint.b = bgrImage.at<uint8_t>(y, 3 * x);
 
 					// Get XY coordinate
-					worldPoint.x = pointZ * (x - cx) / focal_length;
-					worldPoint.y = pointZ * (y - cy) / focal_length;
+					worldPoint.x = pointZ * (x - cx) / fx;
+					worldPoint.y = pointZ * (y - cy) / fx;
 
 					depthPoint.x = x;
 					depthPoint.y = -y;
@@ -684,17 +720,23 @@ class StereoCameraPointCloud	{
 			cv::Mat filteredBGRImage = bgrImage.clone();
 			double disparity, zScaleFactor, zOffset, disparityScaleFactor;
 			// Reprojection Variables
-			double cx, cy, baseline, focal_length, deltaCx;
+			double fx, fy, cx, cy, baseline, deltaCx;
 
 			// Get point scaler
 			pointScaler(disparityType, zScaleFactor, disparityScaleFactor, zOffset);
 
 			// Get Reprojection Constants
-			cx = -sccp->qMatrix.at<double>(0, 3);
-			cy = -sccp->qMatrix.at<double>(1, 3);
-			baseline = -sccp->translationVector.at<double>(0, 0);
-			focal_length = sccp->qMatrix.at<double>(2, 3);
-			deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
+			fx = cameraCalibrationRectified->getCameraFxL();
+			fy = cameraCalibrationRectified->getCameraFyL();
+			cx = cameraCalibrationRectified->getCameraCxL();
+			cy = cameraCalibrationRectified->getCameraCyL();
+			baseline = cameraCalibrationRectified->getBaseline();
+			deltaCx = cameraCalibrationRectified->getDeltaCx();
+			// cx = -sccp->qMatrix.at<double>(0, 3);
+			// cy = -sccp->qMatrix.at<double>(1, 3);
+			// baseline = -sccp->translationVector.at<double>(0, 0);
+			// focal_length = sccp->qMatrix.at<double>(2, 3);
+			// deltaCx = sccp->qMatrix.at<double>(3, 3) * baseline; 
 
 
 			double pointZ;
@@ -716,7 +758,7 @@ class StereoCameraPointCloud	{
 						Z = f * baseline / disparity
 					*/
 
-					pointZ = (focal_length * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
+					pointZ = (fx * baseline / (disparity + deltaCx)) * zScaleFactor + zOffset;
 					// if the Z is > than max Z, we will ignore it
 					if(abs(pointZ) < minZ || abs(pointZ) > maxZ)	{
 					// if(abs(pointZ) > maxZ)	{
@@ -736,8 +778,8 @@ class StereoCameraPointCloud	{
 					depthPoint.b = bgrImage.at<uint8_t>(y, 3 * x);
 
 					// Get XY coordinate
-					worldPoint.x = pointZ * (x - cx) / focal_length;
-					worldPoint.y = pointZ * (y - cy) / focal_length;
+					worldPoint.x = pointZ * (x - cx) / fx;
+					worldPoint.y = pointZ * (y - cy) / fx;
 
 					depthPoint.x = x;
 					depthPoint.y = -y;

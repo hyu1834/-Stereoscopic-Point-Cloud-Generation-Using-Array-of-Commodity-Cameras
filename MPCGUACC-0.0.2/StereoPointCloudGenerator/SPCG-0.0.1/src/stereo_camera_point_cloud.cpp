@@ -23,9 +23,9 @@
 	Constructor/Destructor
 */
 //constructor
-StereoCameraPointCloud::StereoCameraPointCloud(StereoCameraCalibrationParameters* scp, bool calibrate)	{
-	sccp = scp;
-	scd = new StereoCameraDisparity(sccp, calibrate);
+StereoCameraPointCloud::StereoCameraPointCloud(StereoCameraCalibrationParameters* scp, bool calibrate) : cameraCalibrationUnrectified(scp)	{
+	cameraCalibrationRectified = new StereoCameraCalibrationParameters(SIDE_BY_SIDE);
+	scd = new StereoCameraDisparity(cameraCalibrationUnrectified, cameraCalibrationRectified, calibrate);
 }
 
 // destructor

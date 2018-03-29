@@ -21,9 +21,11 @@
 /*
 	Constructor/Destructor
 */
-StereoCameraDisparity::StereoCameraDisparity(StereoCameraCalibrationParameters* scp,
-							  				 const bool calibrated) : calibratedCameras(calibrated)	{
-	scCP = scp;
+StereoCameraDisparity::StereoCameraDisparity(StereoCameraCalibrationParameters* cameraCalibrationUnrectified, 
+											 StereoCameraCalibrationParameters* cameraCalibrationRectified,
+							  				 const bool calibrated) : calibratedCameras(calibrated) : 
+											 cameraCalibrationUnrectified(cameraCalibrationUnrectified),
+											 cameraCalibrationRectified(cameraCalibrationRectified)	{
 	blockMatchAlg = NA;
 }
 
@@ -92,16 +94,19 @@ void StereoCameraDisparity::computeRectificationMatrix(cv::Size imageSize)	{
 		// 				  0,
 		// 				  -1, imageSize, &roi1, &roi2);
 
-		cv::stereoRectify(scCP->cameraMatrix1, scCP->distortionVector1, scCP->cameraMatrix2, scCP->distortionVector2, 
-						  imageSize, scCP->rotationMatrix, scCP->translationVector, R1, R2, P1, P2, scCP->qMatrix, 
-						  CV_CALIB_ZERO_DISPARITY,
+		cv::stereoRectify(cameraCalibrationUnrectified->cameraMatrix1, cameraCalibrationUnrectified->distortionVector1,
+						  cameraCalibrationUnrectified->cameraMatrix2, cameraCalibrationUnrectified->distortionVector2, 
+						  imageSize, cameraCalibrationUnrectified->rotationMatrix, cameraCalibrationUnrectified->translationVector, 
+						  R1, R2, P1, P2, cameraCalibrationRectified->qMatrix, CV_CALIB_ZERO_DISPARITY,
 						  -1, imageSize, &roi1, &roi2);
 		
 		//Precompute maps for cvRemap()
-		cv::initUndistortRectifyMap(scCP->cameraMatrix1, scCP->distortionVector1, R1, P1, imageSize, CV_16SC2, imageMapX1, imageMapY1);
-		cv::initUndistortRectifyMap(scCP->cameraMatrix2, scCP->distortionVector2, R2, P2, imageSize, CV_16SC2, imageMapX2, imageMapY2);
+		cv::initUndistortRectifyMap(cameraCalibrationUnrectified->cameraMatrix1, cameraCalibrationUnrectified->distortionVector1, R1, P1, imageSize, CV_16SC2, imageMapX1, imageMapY1);
+		cv::initUndistortRectifyMap(cameraCalibrationUnrectified->cameraMatrix2, cameraCalibrationUnrectified->distortionVector2, R2, P2, imageSize, CV_16SC2, imageMapX2, imageMapY2);
 		// cv::initUndistortRectifyMap(scCP->cameraMatrix1, scCP->distortionVector1, R1, P1, imageSize, CV_32FC1, imageMapX1, imageMapY1);
 		// cv::initUndistortRectifyMap(scCP->cameraMatrix2, scCP->distortionVector2, R2, P2, imageSize, CV_32FC1, imageMapX2, imageMapY2);
+
+		cameraCalibrationRectified->updateCameraMatrixWithPerspectiveMatrix();
 	}
 	else	{
 		// not implemented yet
@@ -133,7 +138,7 @@ bool StereoCameraDisparity::computeRectificationImage(cv::Mat matImage1, cv::Mat
 
 	#ifdef DEBUGGING
 		// create side by side rectified image
-		cv::Mat* pair = stitchTwoImages(rectifiedImage1, rectifiedImage2, imageSize, scCP->getCameraMode());
+		cv::Mat* pair = stitchTwoImages(rectifiedImage1, rectifiedImage2, imageSize, cameraCalibrationUnrectified->getCameraMode());
 		showImage("Rectified", *pair);
 		delete pair;
 		showImage("Overlay", overLayImages(rectifiedImage1, rectifiedImage2, 0.5));
@@ -232,7 +237,7 @@ bool StereoCameraDisparity::computeDisparityMap(cv::Mat matImage1, cv::Mat matIm
 	}
 
 	// update
-	if(scCP->getCameraMode() == SIDE_BY_SIDE || !calibratedCameras)	{
+	if(cameraCalibrationUnrectified->getCameraMode() == SIDE_BY_SIDE || !calibratedCameras)	{
 		if(blockMatchAlg == SGBM)	{
 			#ifdef DEBUGGING
 				std::clog<<"Using SGBM\n";

@@ -101,7 +101,28 @@ bool StereoCameraCalibrationParameters::readParams()	{
 		printParams(std::cout);
 	#endif
 
+	// Finally update the perspective matrix
+	updatePerspectiveMatrixWithCameraMatrix();
+
 	return true;
+}
+
+void StereoCameraCalibrationParameters::updatePerspectiveMatrixWithCameraMatrix()	{
+	qMatrix.at<double>(0, 0) = 1.0;
+	qMatrix.at<double>(0, 3) = -cameraMatrix1.at<double>(0, 2);
+	qMatrix.at<double>(1, 1) = 1.0;
+	qMatrix.at<double>(1, 3) = -cameraMatrix1.at<double>(1, 2);
+	qMatrix.at<double>(2, 3) = -cameraMatrix1.at<double>(0, 0);
+	qMatrix.at<double>(3, 2) = -1.0 / translationVector.at<double>(0, 0);
+	qMatrix.at<double>(3, 3) = (-cameraMatrix1.at<double>(0, 2) - -cameraMatrix1.at<double>(0, 1)) / translationVector.at<double>(0, 0);
+}
+
+void StereoCameraCalibrationParameters::updateCameraMatrixWithPerspectiveMatrix()	{
+	cameraMatrix1.at<double>(0, 0) = cameraMatrix2.at<double>(0, 0) = cameraMatrix1.at<double>(1, 1) = cameraMatrix2.at<double>(1, 1) = qMatrix.at<double>(2, 3);
+	cameraMatrix1.at<double>(0, 2) = cameraMatrix2.at<double>(0, 2) = -qMatrix.at<double>(0, 3);
+	cameraMatrix1.at<double>(1, 2) = cameraMatrix2.at<double>(1, 2) = -qMatrix.at<double>(1, 3);
+
+	translationVector.at<double>(0, 0) = -1.0 / qMatrix.at<double>(3, 2);
 }
 
 void StereoCameraCalibrationParameters::printParams(std::ostream& out)	{
