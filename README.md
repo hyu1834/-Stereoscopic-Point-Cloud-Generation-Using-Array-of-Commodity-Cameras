@@ -13,7 +13,7 @@ Linkedin: https://www.linkedin.com/in/hiuhong-yu-13220187/
 - OpenGL
 - GLUT
 - Eigen
-- OpenCV 2.4.14
+- OpenCV 2.4.14 (OpenCV 3+ will not work!!!)
 
 ###To compile:
 ------
